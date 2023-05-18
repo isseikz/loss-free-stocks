@@ -29,8 +29,8 @@
 
     <script>
         function calculateStockPrice() {
-            var n = document.getElementById('stockCount').value;
-            var price = document.getElementById('stockPrice').value;
+            var n = Number(document.getElementById('stockCount').value);
+            var price = Number(document.getElementById('stockPrice').value);
             var taxRate = 0.2;
 
             if (n <= 1 || price <= 0) {
