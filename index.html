@@ -3,9 +3,75 @@
 
 <head>
     <title>Stock Price Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .section h2 {
+            margin-top: 0;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            background-color: #008CBA;
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        #dataTable,
+        #dataTable th,
+        #dataTable td {
+            border: 1px solid #aaa;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #dataTable th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #dataTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #dataTable tr:hover {
+            background-color: #ddd;
         }
 
         #result {
@@ -17,37 +83,45 @@
 <body>
     <h1>Stock Price Calculator</h1>
 
-    <label for="stockCode">Stock Code: </label>
-    <input type="text" id="stockCode" />
-
-    <label for="stockCount">Number of Stocks (N): </label>
-    <input type="number" id="stockCount" min="2" step="1" />
-
-    <label for="stockPrice">Price per Stock: </label>
-    <input type="number" id="stockPrice" min="0.01" step="0.01" />
-
-    <button onclick="onCalculateClicked()">Calculate</button>
-    
-    <label for="jsonFile">Import: </label>
-    <input type="file" id="jsonFile" accept=".json" onchange="onImportClicked()">
-
-    <label for="jsonFile">Export: </label>
-    <button onclick="onExportClicked()">Export</button>
-
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>Stock Code</th>
-                <th>Stock Count</th>
-                <th>Stock Price</th>
-                <th>Target Price</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div class="section">
+        <h2>Data Table</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Stock Code</th>
+                    <th>Stock Count</th>
+                    <th>Stock Price</th>
+                    <th>Target Price</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 
 
+    <div class="section">
+        <h2>Add New Data</h2>
+        <label for="stockCode">Stock Code: </label>
+        <input type="text" id="stockCode" />
+
+        <label for="stockCount">Number of Stocks (N): </label>
+        <input type="number" id="stockCount" min="2" step="1" />
+
+        <label for="stockPrice">Price per Stock: </label>
+        <input type="number" id="stockPrice" min="0.01" step="0.01" />
+
+        <button onclick="onCalculateClicked()">Calculate</button>
+    </div>
+
+    <div class="section">
+        <h2>Import/Export Data</h2>
+        <label for="jsonFile">Import: </label>
+        <input type="file" id="jsonFile" accept=".json" onchange="onImportClicked()">
+
+        <label for="jsonFile">Export: </label>
+        <button onclick="onExportClicked()">Export</button>
+    </div>
 
     <div id="result"></div>
 
@@ -59,7 +133,6 @@
                 this.stockPrice = stockPrice;
             }
         }
-
 
         function calculateStockPrice(n, price) {
             var taxRate = 0.2;
@@ -141,9 +214,6 @@
                 reader.readAsText(file);
             }
         }
-
-
-
     </script>
 </body>
 
