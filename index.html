@@ -17,31 +17,133 @@
 <body>
     <h1>Stock Price Calculator</h1>
 
+    <label for="stockCode">Stock Code: </label>
+    <input type="text" id="stockCode" />
+
     <label for="stockCount">Number of Stocks (N): </label>
     <input type="number" id="stockCount" min="2" step="1" />
 
     <label for="stockPrice">Price per Stock: </label>
     <input type="number" id="stockPrice" min="0.01" step="0.01" />
 
-    <button onclick="calculateStockPrice()">Calculate</button>
+    <button onclick="onCalculateClicked()">Calculate</button>
+    
+    <label for="jsonFile">Import: </label>
+    <input type="file" id="jsonFile" accept=".json" onchange="onImportClicked()">
+
+    <label for="jsonFile">Export: </label>
+    <button onclick="onExportClicked()">Export</button>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Stock Code</th>
+                <th>Stock Count</th>
+                <th>Stock Price</th>
+                <th>Target Price</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+
 
     <div id="result"></div>
 
     <script>
-        function calculateStockPrice() {
-            var n = Number(document.getElementById('stockCount').value);
-            var price = Number(document.getElementById('stockPrice').value);
+        class StockData {
+            constructor(stockCode, stockCount, stockPrice) {
+                this.stockCode = stockCode;
+                this.stockCount = stockCount;
+                this.stockPrice = stockPrice;
+            }
+        }
+
+
+        function calculateStockPrice(n, price) {
             var taxRate = 0.2;
 
             if (n <= 1 || price <= 0) {
-                document.getElementById('result').innerHTML = "Invalid input. Please try again.";
+                throw new Error("Invalid input.");
                 return;
             }
 
-            var targetPrice = price / ((n - 1) * (1 - taxRate)) + price;
-
-            document.getElementById('result').innerHTML = "Target price for N-1 stocks considering tax: " + targetPrice.toFixed(2);
+            return price / ((n - 1) * (1 - taxRate)) + price;
         }
+
+        function addRowToTable(stockCode, stockCount, stockPrice, targetPrice) {
+            let table = document.getElementById('dataTable');
+            let row = table.insertRow(-1);  // -1 means the new row will be added at the last position
+            let cell1 = row.insertCell(0);
+            let cell2 = row.insertCell(1);
+            let cell3 = row.insertCell(2);
+            let cell4 = row.insertCell(3);
+
+            cell1.textContent = stockCode;
+            cell2.textContent = stockCount;
+            cell3.textContent = stockPrice;
+            cell4.textContent = targetPrice.toFixed(2);
+        }
+
+        function onCalculateClicked() {
+            let stockCode = document.getElementById('stockCode').value;
+            let n = Number(document.getElementById('stockCount').value);
+            let price = Number(document.getElementById('stockPrice').value);
+
+            try {
+                let targetPrice = calculateStockPrice(n, price);
+                addRowToTable(stockCode, n, price, targetPrice);
+                document.getElementById('result').innerHTML = "Target price for N-1 stocks considering tax: " + targetPrice.toFixed(2);
+            } catch (error) {
+                document.getElementById('result').innerHTML = "Invalid input. Please try again.";
+            }
+        }
+
+        function onExportClicked() {
+            let table = document.getElementById('dataTable');
+            let data = [];
+
+            for (let i = 1; i < table.rows.length; i++) {
+                let row = table.rows[i];
+                let stockData = new StockData(row.cells[0].textContent, Number(row.cells[1].textContent), Number(row.cells[2].textContent));
+                data.push(stockData);
+            }
+
+            let json = JSON.stringify(data);
+            let blob = new Blob([json], { type: "application/json" });
+            let url = URL.createObjectURL(blob);
+
+            let a = document.createElement('a');
+            a.download = "stockdata.json";
+            a.href = url;
+            a.click();
+        }
+
+        function onImportClicked() {
+            let fileInput = document.getElementById('jsonFile');
+            let file = fileInput.files[0];
+
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    let content = e.target.result;
+                    let data = JSON.parse(content);
+
+                    for (let i = 0; i < data.length; i++) {
+                        let stockData = data[i];
+                        let stockDataInstance = new StockData(stockData.stockCode, stockData.stockCount, stockData.stockPrice);
+                        let targetPrice = calculateStockPrice(stockDataInstance.stockCount, stockDataInstance.stockPrice);
+                        addRowToTable(stockDataInstance.stockCode, stockDataInstance.stockCount, stockDataInstance.stockPrice, targetPrice);
+                    }
+                };
+
+                reader.readAsText(file);
+            }
+        }
+
+
+
     </script>
 </body>
 
