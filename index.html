@@ -128,9 +128,40 @@
     <script>
         class StockData {
             constructor(stockCode, stockCount, stockPrice) {
-                this.stockCode = stockCode;
-                this.stockCount = stockCount;
-                this.stockPrice = stockPrice;
+                this.code = stockCode;
+                this.count = stockCount;
+                this.price = stockPrice;
+            }
+        }
+
+        class StockRecord {
+            static lastId = 0;
+            constructor(stockData, targetPrice) {
+                StockRecord.lastId++;
+                this.id = StockRecord.lastId;
+                this.stock = stockData;
+                this.targetPrice = targetPrice;
+            }
+        }
+
+        class RecordController {
+            constructor() {
+                this.records = [];
+            }
+
+            resetRecords(records) {
+                clearRowsOfTable();
+                this.records = records;
+                this.records.forEach(r => {
+                    addRowToTable(r);
+                });
+                updateQueryString(this.records);
+            }
+
+            append(record) {
+                this.records.push(record);
+                addRowToTable(record);
+                updateQueryString(this.records);
             }
         }
 
@@ -145,7 +176,15 @@
             return price / ((n - 1) * (1 - taxRate)) + price;
         }
 
-        function addRowToTable(stockCode, stockCount, stockPrice, targetPrice) {
+        function clearRowsOfTable() {
+            let table = document.getElementById('dataTable');
+            let rowCount = table.rows.length - 1
+            for (let i = 0; i < rowCount; i++) {
+                table.deleteRow(-1);
+            }
+        }
+
+        function addRowToTable(record) {
             let table = document.getElementById('dataTable');
             let row = table.insertRow(-1);  // -1 means the new row will be added at the last position
             let cell1 = row.insertCell(0);
@@ -153,10 +192,20 @@
             let cell3 = row.insertCell(2);
             let cell4 = row.insertCell(3);
 
-            cell1.textContent = stockCode;
-            cell2.textContent = stockCount;
-            cell3.textContent = stockPrice;
-            cell4.textContent = targetPrice.toFixed(2);
+            cell1.textContent = record.stock.code;
+            cell2.textContent = record.stock.count;
+            cell3.textContent = record.stock.price;
+            cell4.textContent = record.targetPrice.toFixed(2);
+        }
+
+        function updateQueryString(records) {
+            let params = [];
+
+            records.forEach((record) => {
+                params.push(`row=${record.id},${record.stock.code},${record.stock.count},${record.stock.price}`);
+            });
+
+            history.pushState({}, '', '?' + params.join('&'));
         }
 
         function onCalculateClicked() {
@@ -166,7 +215,9 @@
 
             try {
                 let targetPrice = calculateStockPrice(n, price);
-                addRowToTable(stockCode, n, price, targetPrice);
+                let newData = new StockData(stockCode, n, price);
+                let record = new StockRecord(newData, targetPrice);
+                controller.append(record);
                 document.getElementById('result').innerHTML = "Target price for N-1 stocks considering tax: " + targetPrice.toFixed(2);
             } catch (error) {
                 document.getElementById('result').innerHTML = "Invalid input. Please try again.";
@@ -183,7 +234,7 @@
                 data.push(stockData);
             }
 
-            let json = JSON.stringify(data);
+            let json = JSON.stringify(controller);
             let blob = new Blob([json], { type: "application/json" });
             let url = URL.createObjectURL(blob);
 
@@ -202,18 +253,28 @@
                 reader.onload = function (e) {
                     let content = e.target.result;
                     let data = JSON.parse(content);
-
-                    for (let i = 0; i < data.length; i++) {
-                        let stockData = data[i];
-                        let stockDataInstance = new StockData(stockData.stockCode, stockData.stockCount, stockData.stockPrice);
-                        let targetPrice = calculateStockPrice(stockDataInstance.stockCount, stockDataInstance.stockPrice);
-                        addRowToTable(stockDataInstance.stockCode, stockDataInstance.stockCount, stockDataInstance.stockPrice, targetPrice);
-                    }
+                    controller.resetRecords(data.records);
                 };
 
                 reader.readAsText(file);
             }
         }
+
+        function importFromQueryString() {
+            const params = new URLSearchParams(window.location.search);
+
+            return params.getAll('row')
+                .map(row => {
+                    const [id, stockCode, stockCount, stockPrice] = row.split(',');
+                    let targetPrice = calculateStockPrice(Number(stockCount), Number(stockPrice));
+                    return new StockRecord(new StockData(stockCode, Number(stockCount), Number(stockPrice)), targetPrice);
+                });
+        }
+
+        let controller = new RecordController();
+        document.addEventListener('DOMContentLoaded', (event) => {
+            controller.resetRecords(importFromQueryString());
+        });
     </script>
 </body>
 
